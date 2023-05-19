@@ -30,6 +30,16 @@ app.post(
   }
 );
 
+// 3 & 4, GET to /api/users that returns an array of users containing only username and _id
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await getAllUsers();
+    res.json(users);
+  } catch (err) {
+    console.error("Error in GET /api/users: ", err);
+  }
+});
+
 // The use of MongoDB and mongoose below here
 const mongoose = require("mongoose");
 
@@ -85,5 +95,16 @@ const getIdFromUser = async (username) => {
       console.error("Error in getIdFromUser: ", err);
       return Promise.reject(err);
     }
+  }
+};
+
+// Function to return an array of all users, only username and _id
+const getAllUsers = async () => {
+  try {
+    const users = await UserExercise.find({}, { username: 1, _id: 1 });
+    return users;
+  } catch (err) {
+    console.error("Error in getAllUsers: ", err);
+    return Promise.reject(err);
   }
 };
