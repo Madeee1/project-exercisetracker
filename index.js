@@ -13,7 +13,7 @@ const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-// 1 and 2 You can POST to /api/users with form data username to create a new user.
+// 2 and 3 You can POST to /api/users with form data username to create a new user.
 app.post(
   "/api/users",
   express.urlencoded({ extended: true }),
@@ -30,7 +30,7 @@ app.post(
   }
 );
 
-// 3 & 4, GET to /api/users that returns an array of users containing only username and _id
+// 4 & 5 & 6, GET to /api/users that returns an array of users containing only username and _id
 app.get("/api/users", async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -39,6 +39,38 @@ app.get("/api/users", async (req, res) => {
     console.error("Error in GET /api/users: ", err);
   }
 });
+
+// 7 & 8, POST to /api/users/:_id/exercises with form data description, duration, and optionally date.
+app.post(
+  "/api/users/:_id/exercises",
+  express.urlencoded({ extended: true }),
+  async (req, res) => {
+    const userId = req.params._id;
+    const description = req.body.description;
+    const duration = req.body.duration;
+
+    // Check if the date is empty, if so, use the current date
+    const date = req.body.date ? new Date(req.body.date) : new Date();
+
+    try {
+      const newUserAndExercise = await addExerciseToUser(
+        userId,
+        description,
+        duration,
+        date
+      );
+      res.json({
+        username: newUserAndExercise.username,
+        description: description,
+        duration: parseInt(duration),
+        date: date.toDateString(),
+        _id: userId,
+      });
+    } catch (err) {
+      console.error("Error in POST /api/users/:_id/exercises: ", err);
+    }
+  }
+);
 
 // The use of MongoDB and mongoose below here
 const mongoose = require("mongoose");
@@ -105,6 +137,23 @@ const getAllUsers = async () => {
     return users;
   } catch (err) {
     console.error("Error in getAllUsers: ", err);
+    return Promise.reject(err);
+  }
+};
+
+// Function to add an exercise to a user
+const addExerciseToUser = async (userId, description, duration, date) => {
+  // ASSUME THAT THE USER EXISTS
+  try {
+    // Find by user id and update
+    const userAndExercise = await UserExercise.findOneAndUpdate(
+      { _id: userId },
+      { $push: { log: { description, duration, date } } },
+      { new: true }
+    );
+    return userAndExercise;
+  } catch (err) {
+    console.error("Error in addExerciseToUser: ", err);
     return Promise.reject(err);
   }
 };
