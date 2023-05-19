@@ -13,7 +13,7 @@ const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
 
-// 1. You can POST to /api/users with form data username to create a new user.
+// 1 and 2 You can POST to /api/users with form data username to create a new user.
 app.post(
   "/api/users",
   express.urlencoded({ extended: true }),
@@ -29,7 +29,6 @@ app.post(
     }
   }
 );
-// 2. The returned response from POST /api/users with form data username will be an object with username and _id properties.
 
 // The use of MongoDB and mongoose below here
 const mongoose = require("mongoose");
