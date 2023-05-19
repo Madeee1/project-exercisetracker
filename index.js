@@ -72,6 +72,37 @@ app.post(
   }
 );
 
+// 9 - 16, GET to /api/users/:_id/logs to retrieve a full exercise log of any user.
+// Optional parameters of From, To, and Limit in the query
+app.get("/api/users/:_id/logs", async (req, res) => {
+  const userId = req.params._id;
+  const from = req.query.from; // Date in yyyy-mm-dd format
+  const to = req.query.to; // Date in yyyy-mm-dd format
+  const limit = req.query.limit;
+
+  // For no further query
+  try {
+    const userExLog = await getExerciseLog(userId);
+    const countNum = userExLog.countExercises();
+
+    res.json({
+      username: userExLog.username,
+      count: countNum,
+      _id: userId,
+      // Print out the log array and map the date using toDateString
+      log: userExLog.log.map((exercise) => {
+        return {
+          description: exercise.description,
+          duration: exercise.duration,
+          date: exercise.date.toDateString(),
+        };
+      }),
+    });
+  } catch (err) {
+    console.error("Error in GET /api/users/:_id/logs: ", err);
+  }
+});
+
 // The use of MongoDB and mongoose below here
 const mongoose = require("mongoose");
 
@@ -154,6 +185,17 @@ const addExerciseToUser = async (userId, description, duration, date) => {
     return userAndExercise;
   } catch (err) {
     console.error("Error in addExerciseToUser: ", err);
+    return Promise.reject(err);
+  }
+};
+
+// Function to get the exercise log of a user
+const getExerciseLog = async (userId) => {
+  try {
+    const userExLog = await UserExercise.findById(userId);
+    return userExLog;
+  } catch (err) {
+    console.error("Error in getExerciseLog: ", err);
     return Promise.reject(err);
   }
 };
