@@ -82,8 +82,8 @@ app.get("/api/users/:_id/logs", async (req, res) => {
 
   // For no further query
   try {
-    const userExLog = await getExerciseLog(userId);
-    const countNum = userExLog.countExercises();
+    let [userExLog, countNum] = await getExerciseLog(userId, from, to, limit);
+    countNum = userExLog.countExercises();
 
     res.json({
       username: userExLog.username,
@@ -190,10 +190,44 @@ const addExerciseToUser = async (userId, description, duration, date) => {
 };
 
 // Function to get the exercise log of a user
-const getExerciseLog = async (userId) => {
+const getExerciseLog = async (userId, from, to, limit) => {
   try {
     const userExLog = await UserExercise.findById(userId);
-    return userExLog;
+    const countNum = userExLog.countExercises();
+
+    // Use if else statements to use the from, to, limit
+    if (limit && from && to) {
+      // Convert the date to Date object
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+
+      // Filter the log array
+      userExLog.log = userExLog.log.filter((exercise) => {
+        return (
+          exercise.date.getTime() >= fromDate.getTime() &&
+          exercise.date.getTime() <= toDate.getTime()
+        );
+      });
+
+      // Slice the array
+      userExLog.log = userExLog.log.slice(0, limit);
+    } else if (limit && !from && !to) {
+      userExLog.log = userExLog.log.slice(0, limit);
+    } else if (!limit && from && to) {
+      // Convert the date to Date object
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+
+      // Filter the log array
+      userExLog.log = userExLog.log.filter((exercise) => {
+        return (
+          exercise.date.getTime() >= fromDate.getTime() &&
+          exercise.date.getTime() <= toDate.getTime()
+        );
+      });
+    }
+
+    return [userExLog, countNum];
   } catch (err) {
     console.error("Error in getExerciseLog: ", err);
     return Promise.reject(err);
